@@ -275,7 +275,9 @@ with tab1:
                 'merge_output_format': 'mp4',
                 'continuedl': True,
                 'overwrites': True,
-                'postprocessors': [{'key': 'FFmpegMetadata', 'add_metadata': True}], 
+                'postprocessors': [{'key': 'FFmpegMetadata', 'add_metadata': True}],
+                # android_vr 클라이언트는 대용량 다운로드 중간에 403으로 끊기는 경우가 있어 제외
+                'extractor_args': {'youtube': {'player_client': ['tv', 'web']}},
             }
             
             if "최고화질" in quality:
