@@ -25,6 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 COPY .streamlit ./.streamlit
 
+# yt-dlp는 유튜브 대응 패치가 잦아 빌드마다 최신으로 강제 갱신 (레이어 캐시로 구버전 고정 방지)
+RUN pip install --no-cache-dir --upgrade yt-dlp
+
 # 다운로드 결과가 저장될 위치 (docker volume으로 매핑)
 ENV DOWNLOAD_DIR=/downloads
 RUN mkdir -p /downloads
