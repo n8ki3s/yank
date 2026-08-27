@@ -2,12 +2,18 @@
 # 시놀로지(Container Manager) / 클라우드 어디서든 동작
 FROM python:3.12-slim
 
-# ffmpeg + 클립보드(pyperclip)용 도구 설치
+# ffmpeg + 클립보드(pyperclip)용 도구 설치 + deno(yt-dlp JS 런타임, 유튜브 403 방지)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ffmpeg \
         xclip \
+        curl \
+        unzip \
+    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
+    && apt-get purge -y curl unzip \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/usr/local/bin:${PATH}"
 
 WORKDIR /app
 
