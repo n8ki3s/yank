@@ -4,7 +4,7 @@
 # 갱신: docker-compose -f docker-compose.deploy.yml pull
 services:
   yank:
-    image: ghcr.io/n8ki3/yank:latest
+    image: ghcr.io/n8ki3s/yank:latest
     container_name: yank
     ports:
       - "8501:8501"        # 시놀로지에서 원하는 포트로 앞 숫자만 변경
