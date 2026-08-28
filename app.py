@@ -276,8 +276,9 @@ with tab1:
                 'continuedl': True,
                 'overwrites': True,
                 'postprocessors': [{'key': 'FFmpegMetadata', 'add_metadata': True}],
-                # android_vr: 대용량 다운로드 중 403 / web: "page needs to be reloaded" 버그 있어 제외
-                'extractor_args': {'youtube': {'player_client': ['ios', 'tv']}},
+                # android_vr: 대용량 다운로드 중 403 / web, ios, tv, tv_downgraded: "page needs to be reloaded" 버그 있어 제외
+                # tv_embedded는 실재하지 않는 client명(오타)이라 조용히 무시되고 android만 적용되어 최고화질이 360p로 떨어지던 문제 수정
+                'extractor_args': {'youtube': {'player_client': ['visionos']}},
             }
             
             if "최고화질" in quality:
