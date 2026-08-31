@@ -494,11 +494,34 @@ with tab2:
         ffmpeg_exe = get_ffmpeg_path()
         src = st.session_state.mp3_target
         out = os.path.splitext(src)[0] + ".mp3"
+        status = st.empty()
+        pbar = st.progress(0)
+        status.info("🎵 MP3 변환 중...")
         try:
-            cmd = [ffmpeg_exe, '-y', '-i', src, '-vn', '-c:a', 'libmp3lame', '-b:a', '192k', out]
-            subprocess.run(cmd, check=True, **subprocess_flags())
+            probe = subprocess.run(
+                [get_ffprobe_path(), '-v', 'error', '-show_entries', 'format=duration',
+                 '-of', 'default=nw=1:nk=1', src],
+                capture_output=True, text=True, **subprocess_flags()
+            )
+            total_dur = float((probe.stdout or "0").strip() or 0)
+
+            cmd = [ffmpeg_exe, '-y', '-i', src, '-vn', '-c:a', 'libmp3lame', '-b:a', '192k',
+                   '-progress', 'pipe:1', '-nostats', out]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                     text=True, **subprocess_flags())
+            for line in proc.stdout:
+                if line.startswith('out_time_ms=') and total_dur > 0:
+                    pbar.progress(min(int(line.strip().split('=')[1]) / 1_000_000 / total_dur, 1.0))
+            proc.wait()
+            if proc.returncode != 0:
+                raise subprocess.CalledProcessError(proc.returncode, cmd)
+
+            pbar.progress(1.0)
+            status.success("✅ MP3 변환 완료!")
             st.session_state.mp3_result = ("success", f"🎵 MP3 변환 완료! → {out}")
         except Exception as e:
+            status.empty()
+            pbar.empty()
             st.session_state.mp3_result = ("error", f"오류: {e}")
         finally:
             st.session_state.is_processing = False
