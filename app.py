@@ -32,6 +32,8 @@ if 'last_save_path' not in st.session_state: st.session_state.last_save_path = "
 if 'is_processing' not in st.session_state: st.session_state.is_processing = False
 if 'cut_result' not in st.session_state: st.session_state.cut_result = None
 if 'dl_result' not in st.session_state: st.session_state.dl_result = None
+if 'mp3_result' not in st.session_state: st.session_state.mp3_result = None
+if 'mp3_target' not in st.session_state: st.session_state.mp3_target = None
 if 'cut_timestamps' not in st.session_state: st.session_state.cut_timestamps = ""
 if 'chapter_msg' not in st.session_state: st.session_state.chapter_msg = None
 if 'auto_url_for' not in st.session_state: st.session_state.auto_url_for = None
@@ -342,6 +344,16 @@ with tab2:
             st.toast("자르기 실패", icon="⚠️")
         st.session_state.cut_result = None
 
+    if st.session_state.mp3_result:
+        kind, msg = st.session_state.mp3_result
+        if kind == "success":
+            st.success(msg)
+            st.toast("MP3 변환 완료!", icon="🎵")
+        else:
+            st.error(msg)
+            st.toast("MP3 변환 실패", icon="⚠️")
+        st.session_state.mp3_result = None
+
     scan_dir = st.text_input(
         "📁 검색 폴더",
         value=default_dir,
@@ -398,6 +410,13 @@ with tab2:
 
     if video_path:
         st.caption(f"대상 파일: `{video_path}`")
+        if st.button("🎵 MP3로 변환", disabled=st.session_state.is_processing):
+            if not os.path.exists(video_path):
+                st.error(f"파일을 찾을 수 없습니다: {video_path}")
+            else:
+                st.session_state.mp3_target = video_path
+                st.session_state.is_processing = True
+                st.rerun()
 
     # 선택한 파일에 저장된 유튜브 주소가 있으면 자동으로 읽어 챕터를 불러온다 (파일당 1회)
     if (video_path and os.path.exists(video_path)
@@ -470,6 +489,20 @@ with tab2:
         else:
             st.session_state.is_processing = True
             st.rerun()
+
+    if st.session_state.is_processing and st.session_state.mp3_target:
+        ffmpeg_exe = get_ffmpeg_path()
+        src = st.session_state.mp3_target
+        out = os.path.splitext(src)[0] + ".mp3"
+        try:
+            cmd = [ffmpeg_exe, '-y', '-i', src, '-vn', '-c:a', 'libmp3lame', '-b:a', '192k', out]
+            subprocess.run(cmd, check=True, **subprocess_flags())
+            st.session_state.mp3_result = ("success", f"🎵 MP3 변환 완료! → {out}")
+        except Exception as e:
+            st.session_state.mp3_result = ("error", f"오류: {e}")
+        finally:
+            st.session_state.is_processing = False
+            st.session_state.mp3_target = None
 
     if st.session_state.is_processing and video_path and timestamps:
         ffmpeg_exe = get_ffmpeg_path()
